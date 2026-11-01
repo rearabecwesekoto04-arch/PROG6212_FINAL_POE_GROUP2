@@ -10,9 +10,9 @@
         public DateTime EventDate { get; set; }
         public string Location { get; set; } = "";
         public decimal Distance { get; set; }
-        public string EventType { get; set; } = "";   // Run, Walk, Cycle
+        public string EventType { get; set; } = "";
         public string? RouteInfo { get; set; }
+        public string? BannerUrl { get; set; } // ← ADDED
         public List<Category> Categories { get; set; } = new();
     }
 }
-
