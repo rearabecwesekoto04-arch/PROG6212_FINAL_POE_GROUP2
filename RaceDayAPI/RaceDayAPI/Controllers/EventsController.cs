@@ -66,7 +66,7 @@ namespace RaceDayAPI.Controllers
             return NoContent();
         }
 
-        // ─ NEW: BANNER UPLOAD ─
+        // ─ BANNER UPLOAD ─
         [HttpPost("{id}/banner"), Authorize(Roles = "Organiser")]
         public async Task<IActionResult> UploadBanner(int id, IFormFile file)
         {
