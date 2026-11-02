@@ -5,7 +5,7 @@ using Microsoft.OpenApi.Models;
 using RaceDayAPI.Data;
 using RaceDayAPI.Services;
 using System.Text;
-using RaceDayAPI.Services;
+using Microsoft.AspNetCore.Http;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,7 +26,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
   });
 builder.Services.AddAuthorization();
 builder.Services.AddControllers();
-builder.Services.AddSingleton<IBlobService, BlobService>();
+
+builder.Services.AddHttpContextAccessor();                           // ? ADDED
+builder.Services.AddSingleton<IBlobService, LocalBlobService>();     // ? CHANGED (was BlobService)
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c => {
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -50,6 +53,7 @@ using (var scope = app.Services.CreateScope())
 }
 app.UseSwagger(); app.UseSwaggerUI();
 app.UseHttpsRedirection();
+app.UseStaticFiles();      // ? ADDED (serves /uploads/events/*.jpg)
 app.UseAuthentication();   // must come before UseAuthorization
 app.UseAuthorization();
 app.MapControllers();
