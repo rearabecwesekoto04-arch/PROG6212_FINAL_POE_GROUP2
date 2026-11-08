@@ -1,0 +1,52 @@
+﻿@model List<RaceDayMVC.Models.EventEnrolmentVm>
+@{
+    ViewData["Title"] = "Enrolments";
+    int eventId = ViewBag.EventId ?? 0;
+}
+
+<div class="container mt-4">
+    <a asp-action="Index" class="btn btn-outline-secondary mb-3">← Back</a>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="fw-bold">Enrolments</h1>
+        <span class="badge bg-primary fs-6">@Model.Count total</span>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info text-center py-5"><h4>No enrolments yet</h4></div>
+    }
+    else
+    {
+        <div class="card shadow-sm">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Participant</th>
+                            <th>Email</th>
+                            <th>Category</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var e in Model.OrderBy(x => x.Participant))
+                        {
+                            var cls = e.Status == "Confirmed" ? "bg-success"
+                            : e.Status == "Pending" ? "bg-warning text-dark"
+                            : "bg-secondary";
+                            <tr>
+                                <td><strong>@e.Participant</strong></td>
+                                <td>@e.ParticipantEmail</td>
+                                <td>@e.Category</td>
+                                <td>@e.EnrolmentDate.ToString("dd MMM yyyy")</td>
+                                <td><span class="badge @cls">@e.Status.ToUpper()</span></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>
