@@ -13,12 +13,21 @@ namespace RaceDayAPI.Data
             string Hash() => BCrypt.Net.BCrypt.HashPassword(pw);
 
             // ---------- USERS ----------
+            // Organisers (RoleId 1)
             var org1 = new User { RoleId = 1, FullName = "Tlhologelo Sekoto", Email = "tr.otokes23@raceday.co.za", PhoneNumber = "0821234567", PasswordHash = Hash() };
             var org2 = new User { RoleId = 1, FullName = "Thandi Mathe", Email = "sebotse.mm21@raceday.co.za", PhoneNumber = "0837654321", PasswordHash = Hash() };
+
+            // Participants (RoleId 2)
             var par1 = new User { RoleId = 2, FullName = "Shonisani Thavhiwa", Email = "shoni.sp12@raceday.co.za", PhoneNumber = "0841112222", PasswordHash = Hash() };
             var par2 = new User { RoleId = 2, FullName = "Rearabecwe Tlatsi", Email = "tlatsi.otokes04@raceday.co.za", PhoneNumber = "0829998888", PasswordHash = Hash() };
+            var par3 = new User { RoleId = 2, FullName = "Lerato Molefe", Email = "lerato.molefe@raceday.co.za", PhoneNumber = "0711234567", PasswordHash = Hash() };
+            var par4 = new User { RoleId = 2, FullName = "Sipho Dlamini", Email = "sipho.dlamini@raceday.co.za", PhoneNumber = "0722345678", PasswordHash = Hash() };
+            var par5 = new User { RoleId = 2, FullName = "Naledi Khumalo", Email = "naledi.khumalo@raceday.co.za", PhoneNumber = "0733456789", PasswordHash = Hash() };
+            var par6 = new User { RoleId = 2, FullName = "Johan van der Merwe", Email = "johan.vdmerwe@raceday.co.za", PhoneNumber = "0744567890", PasswordHash = Hash() };
+            var par7 = new User { RoleId = 2, FullName = "Ayesha Patel", Email = "ayesha.patel@raceday.co.za", PhoneNumber = "0755678901", PasswordHash = Hash() };
+            var par8 = new User { RoleId = 2, FullName = "Thabo Nkosi", Email = "thabo.nkosi@raceday.co.za", PhoneNumber = "0766789012", PasswordHash = Hash() };
 
-            db.Users.AddRange(org1, org2, par1, par2);
+            db.Users.AddRange(org1, org2, par1, par2, par3, par4, par5, par6, par7, par8);
             db.SaveChanges();
 
             // ---------- EVENTS + CATEGORIES ----------
@@ -147,71 +156,59 @@ namespace RaceDayAPI.Data
             db.Events.AddRange(joburg10k, trailRun, sowetoWalk, pretoriaCycle, sandtonNight, cradle15k, springClassic);
             db.SaveChanges();
 
-            // ---------- ENROLMENTS (2 per event, one from each participant) ----------
-            // Helper: builds one enrolment
-            Enrolment Enrol(User participant, Category category, DateTime date, string status = "Confirmed")
-                => new Enrolment
+            // ---------- ENROLMENTS (participants only) ----------
+            // Each upcoming event: Shonisani + Rearabecwe + 3 rotating participants = 5 enrolments
+            var upcoming = new[] { joburg10k, trailRun, sowetoWalk, pretoriaCycle, sandtonNight, cradle15k };
+            var rotating = new[] { par3, par4, par5, par6, par7, par8 };
+
+            for (int e = 0; e < upcoming.Length; e++)
+            {
+                var group = new List<User>
                 {
-                    Participant = participant,
-                    Category = category,
-                    EnrolmentDate = date,
-                    Status = status
+                    par1,
+                    par2,
+                    rotating[e % rotating.Length],
+                    rotating[(e + 1) % rotating.Length],
+                    rotating[(e + 2) % rotating.Length]
                 };
 
+                // Only the Distance categories, so nobody lands in an age group they don't belong to
+                var distanceCats = upcoming[e].Categories.Where(c => c.CategoryType == "Distance").ToList();
+
+                for (int k = 0; k < group.Count; k++)
+                {
+                    db.Add(new Enrolment
+                    {
+                        Participant = group[k],
+                        Category = distanceCats[k % distanceCats.Count],
+                        EnrolmentDate = new DateTime(2026, 11, 1).AddDays((e + k) % 7),
+                        Status = (e + k) % 4 == 3 ? "Pending" : "Confirmed"
+                    });
+                }
+            }
+
+            // Spring Classic (past event): 6 enrolments WITH results
+            Enrolment Past(User who, Category cat, DateTime date, TimeSpan? time, int? pos, string status)
+                => new Enrolment
+                {
+                    Participant = who,
+                    Category = cat,
+                    EnrolmentDate = date,
+                    Status = "Confirmed",
+                    Result = new Result { FinishTime = time, Position = pos, Status = status }
+                };
+
+            var five = springClassic.Categories[0];   // 5K Open
+            var ten = springClassic.Categories[1];    // 10K Open
+
             db.AddRange(
-                // Joburg City 10K
-                Enrol(par1, joburg10k.Categories[0], new DateTime(2026, 11, 2)),               // 10K Open
-                Enrol(par2, joburg10k.Categories[1], new DateTime(2026, 11, 3)),               // 5K Fun Run
-
-                // Magaliesberg Trail Run
-                Enrol(par1, trailRun.Categories[0], new DateTime(2026, 11, 4)),                // Half Marathon
-                Enrol(par2, trailRun.Categories[1], new DateTime(2026, 11, 4), "Pending"),     // 10K Trail
-
-                // Soweto Family Walk
-                Enrol(par1, sowetoWalk.Categories[0], new DateTime(2026, 11, 1)),              // 5K Walk
-                Enrol(par2, sowetoWalk.Categories[0], new DateTime(2026, 11, 1)),              // 5K Walk
-
-                // Pretoria Sunrise Cycle
-                Enrol(par1, pretoriaCycle.Categories[0], new DateTime(2026, 11, 6)),           // 40K Road Ride
-                Enrol(par2, pretoriaCycle.Categories[1], new DateTime(2026, 11, 6), "Pending"),// 20K Social Ride
-
-                // Sandton Night Run
-                Enrol(par1, sandtonNight.Categories[0], new DateTime(2026, 11, 5), "Pending"), // 8K Night Run
-                Enrol(par2, sandtonNight.Categories[0], new DateTime(2026, 11, 7)),            // 8K Night Run
-
-                // Cradle Valley 15K
-                Enrol(par1, cradle15k.Categories[0], new DateTime(2026, 11, 7)),               // 15K Open
-                Enrol(par2, cradle15k.Categories[1], new DateTime(2026, 11, 8))                // 5K Family
+                Past(par1, five, new DateTime(2026, 9, 28), new TimeSpan(0, 24, 35), 12, "Finished"),
+                Past(par2, ten, new DateTime(2026, 9, 30), null, null, "DNF"),
+                Past(par3, five, new DateTime(2026, 9, 27), new TimeSpan(0, 22, 10), 5, "Finished"),
+                Past(par4, ten, new DateTime(2026, 9, 29), new TimeSpan(0, 52, 30), 21, "Finished"),
+                Past(par5, five, new DateTime(2026, 9, 29), new TimeSpan(0, 31, 45), 40, "Finished"),
+                Past(par6, ten, new DateTime(2026, 9, 30), new TimeSpan(0, 47, 20), 14, "Finished")
             );
-
-            // Spring Classic (past event) – enrolments WITH results
-            db.Add(new Enrolment
-            {
-                Participant = par1,
-                Category = springClassic.Categories[0],  // 5K Open
-                EnrolmentDate = new DateTime(2026, 9, 28),
-                Status = "Confirmed",
-                Result = new Result
-                {
-                    FinishTime = new TimeSpan(0, 24, 35),
-                    Position = 12,
-                    Status = "Finished"
-                }
-            });
-
-            db.Add(new Enrolment
-            {
-                Participant = par2,
-                Category = springClassic.Categories[1],  // 10K Open
-                EnrolmentDate = new DateTime(2026, 9, 30),
-                Status = "Confirmed",
-                Result = new Result
-                {
-                    FinishTime = null,
-                    Position = null,
-                    Status = "DNF"
-                }
-            });
 
             db.SaveChanges();
         }
