@@ -147,31 +147,44 @@ namespace RaceDayAPI.Data
             db.Events.AddRange(joburg10k, trailRun, sowetoWalk, pretoriaCycle, sandtonNight, cradle15k, springClassic);
             db.SaveChanges();
 
-            // ---------- ENROLMENTS (+ RESULTS for the past event) ----------
-            db.Add(new Enrolment
-            {
-                Participant = par1,
-                Category = joburg10k.Categories[0],      // 10K Open
-                EnrolmentDate = new DateTime(2026, 11, 2),
-                Status = "Confirmed"
-            });
+            // ---------- ENROLMENTS (2 per event, one from each participant) ----------
+            // Helper: builds one enrolment
+            Enrolment Enrol(User participant, Category category, DateTime date, string status = "Confirmed")
+                => new Enrolment
+                {
+                    Participant = participant,
+                    Category = category,
+                    EnrolmentDate = date,
+                    Status = status
+                };
 
-            db.Add(new Enrolment
-            {
-                Participant = par1,
-                Category = sandtonNight.Categories[0],   // 8K Night Run
-                EnrolmentDate = new DateTime(2026, 11, 5),
-                Status = "Pending"
-            });
+            db.AddRange(
+                // Joburg City 10K
+                Enrol(par1, joburg10k.Categories[0], new DateTime(2026, 11, 2)),               // 10K Open
+                Enrol(par2, joburg10k.Categories[1], new DateTime(2026, 11, 3)),               // 5K Fun Run
 
-            db.Add(new Enrolment
-            {
-                Participant = par2,
-                Category = joburg10k.Categories[1],      // 5K Fun Run
-                EnrolmentDate = new DateTime(2026, 11, 3),
-                Status = "Confirmed"
-            });
+                // Magaliesberg Trail Run
+                Enrol(par1, trailRun.Categories[0], new DateTime(2026, 11, 4)),                // Half Marathon
+                Enrol(par2, trailRun.Categories[1], new DateTime(2026, 11, 4), "Pending"),     // 10K Trail
 
+                // Soweto Family Walk
+                Enrol(par1, sowetoWalk.Categories[0], new DateTime(2026, 11, 1)),              // 5K Walk
+                Enrol(par2, sowetoWalk.Categories[0], new DateTime(2026, 11, 1)),              // 5K Walk
+
+                // Pretoria Sunrise Cycle
+                Enrol(par1, pretoriaCycle.Categories[0], new DateTime(2026, 11, 6)),           // 40K Road Ride
+                Enrol(par2, pretoriaCycle.Categories[1], new DateTime(2026, 11, 6), "Pending"),// 20K Social Ride
+
+                // Sandton Night Run
+                Enrol(par1, sandtonNight.Categories[0], new DateTime(2026, 11, 5), "Pending"), // 8K Night Run
+                Enrol(par2, sandtonNight.Categories[0], new DateTime(2026, 11, 7)),            // 8K Night Run
+
+                // Cradle Valley 15K
+                Enrol(par1, cradle15k.Categories[0], new DateTime(2026, 11, 7)),               // 15K Open
+                Enrol(par2, cradle15k.Categories[1], new DateTime(2026, 11, 8))                // 5K Family
+            );
+
+            // Spring Classic (past event) – enrolments WITH results
             db.Add(new Enrolment
             {
                 Participant = par1,
