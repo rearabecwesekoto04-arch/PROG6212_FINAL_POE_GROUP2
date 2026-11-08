@@ -1,0 +1,79 @@
+﻿@model List<RaceDayMVC.Models.MyResultVm>
+@{
+    ViewData["Title"] = "My Results";
+}
+
+<div class="container mt-4">
+    <h1 class="fw-bold mb-4">My Race History</h1>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info text-center py-5">
+            <h4>No results yet</h4>
+            <p>Once the organiser captures your result, it will appear here.</p>
+        </div>
+    }
+    else
+    {
+        <div class="card shadow-sm">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Event</th>
+                            <th>Category</th>
+                            <th>Finish Time</th>
+                            <th>Position</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r in Model)
+                        {
+                            <tr>
+                                <td><strong>@r.Event</strong></td>
+                                <td>@r.Category</td>
+                                <td>
+                                    @if (r.FinishTime.HasValue)
+                                    {
+                                        <span class="badge bg-primary fs-6">@r.FinishTime.Value.ToString(@"hh\:mm\:ss")</span>
+                                    }
+                                    else
+                                    {
+
+                                        <span class="text-muted">—</span>
+                                    }
+                                </td>
+                                <td>@Ordinal(r.Position)</td>
+                                <td>
+                                    <span class="badge bg-@(r.Status == "Finished" ? "success" : r.Status == "DNF" ? "warning text-dark" : "secondary")">
+                                        @r.Status?.ToUpper()
+                                    </span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>
+
+@functions {
+    string Ordinal(int? p)
+    {
+        if (p == null) return "—";
+        var suffix = (p.Value % 100) switch
+        {
+            11 or 12 or 13 => "th",
+            _ => (p.Value % 10) switch
+            {
+                1 => "st",
+                2 => "nd",
+                3 => "rd",
+                _ => "th"
+            }
+        };
+        return $"{p}{suffix}";
+    }
+}
