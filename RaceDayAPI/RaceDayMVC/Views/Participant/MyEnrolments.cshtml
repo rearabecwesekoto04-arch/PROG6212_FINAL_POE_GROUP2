@@ -1,0 +1,51 @@
+﻿@model List<RaceDayMVC.Models.MyEnrolmentVm>
+@{
+    ViewData["Title"] = "My Enrolments";
+}
+
+<div class="container mt-4">
+    <h1 class="fw-bold mb-4">My Enrolments</h1>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info text-center py-5">
+            <h4>You haven't enrolled in any events yet</h4>
+            <a asp-action="Index" class="btn btn-primary mt-2">Browse Events →</a>
+        </div>
+    }
+    else
+    {
+        <div class="card shadow-sm">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Event</th>
+                            <th>Category</th>
+                            <th>Enrolled On</th>
+                            <th>Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var e in Model)
+                        {
+                            var cls = e.Status == "Confirmed" ? "bg-success"
+                            : e.Status == "Pending" ? "bg-warning text-dark"
+                            : "bg-secondary";
+                            <tr>
+                                <td><strong>@e.Event</strong></td>
+                                <td>@e.Category</td>
+                                <td>@e.EnrolmentDate.ToString("dd MMM yyyy")</td>
+                                <td><span class="badge @cls">@e.Status.ToUpper()</span></td>
+                                <td>
+                                    <a asp-action="Details" asp-route-id="@e.EventId" class="btn btn-sm btn-outline-primary">View Event</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>
