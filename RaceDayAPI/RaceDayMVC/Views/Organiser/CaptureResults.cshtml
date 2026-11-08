@@ -1,0 +1,83 @@
+﻿@model List<RaceDayMVC.Models.EventEnrolmentVm>
+@{
+    ViewData["Title"] = "Capture Results";
+    int eventId = ViewBag.EventId ?? 0;
+    var results = ViewBag.Results as List<RaceDayMVC.Models.EventResultVm> ?? new();
+}
+
+<div class="container mt-4">
+    <a asp-action="Index" class="btn btn-outline-secondary mb-3">← Back</a>
+    <h1 class="fw-bold mb-4">Capture Results</h1>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible">
+            @TempData["Success"]
+            <button class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible">
+            @TempData["Error"]
+            <button class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info text-center py-5"><h4>No participants enrolled</h4></div>
+    }
+    else
+    {
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <p class="text-muted small">Enter finish time as HH:MM:SS (e.g., 01:45:30).</p>
+
+                @foreach (var e in Model.OrderBy(x => x.Participant))
+                {
+                    var existing = results.FirstOrDefault(r => r.EnrolmentId == e.EnrolmentId);
+                    var ftValue = existing?.FinishTime?.ToString(@"hh\:mm\:ss") ?? "";
+                    var posValue = existing?.Position?.ToString() ?? "";
+                    var statusValue = existing?.Status ?? "Finished";
+
+                    <div class="border rounded p-3 mb-3">
+                        <div class="row g-2 align-items-center">
+                            <div class="col-md-4">
+                                <strong>@e.Participant</strong>
+                                <div class="small text-muted">@e.Category</div>
+                            </div>
+                            <div class="col-md-8">
+                                <form asp-action="CaptureResult" method="post" class="row g-2">
+                                    <input type="hidden" name="enrolmentId" value="@e.EnrolmentId" />
+                                    <input type="hidden" name="eventId" value="@eventId" />
+                                    <div class="col-md-3">
+                                        <input name="finishTime" class="form-control form-control-sm"
+                                               placeholder="HH:MM:SS" value="@ftValue" />
+                                    </div>
+                                    <div class="col-md-2">
+                                        <input name="position" type="number" min="1"
+                                               class="form-control form-control-sm"
+                                               placeholder="Pos" value="@posValue" />
+                                    </div>
+                                    <div class="col-md-3">
+                                        <select name="status" class="form-select form-select-sm">
+                                            <option value="Finished" selected="@(statusValue == "Finished")">Finished</option>
+                                            <option value="DNF" selected="@(statusValue == "DNF")">DNF</option>
+                                            <option value="DSQ" selected="@(statusValue == "DSQ")">DSQ</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <button class="btn btn-success btn-sm w-100">
+                                            @(existing == null ? "Save" : "Update")
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
