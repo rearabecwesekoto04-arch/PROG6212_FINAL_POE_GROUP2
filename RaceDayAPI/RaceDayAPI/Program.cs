@@ -24,11 +24,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
       ValidAudience = jwt["Audience"],
       IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt["Key"]!))
   });
+
 builder.Services.AddAuthorization();
 builder.Services.AddControllers();
 
-builder.Services.AddHttpContextAccessor();                           // ? ADDED
-builder.Services.AddSingleton<IBlobService, LocalBlobService>();     // ? CHANGED (was BlobService)
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddSingleton<IBlobService, LocalBlobService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c => {
@@ -47,16 +48,25 @@ builder.Services.AddSwaggerGen(c => {
 });
 
 var app = builder.Build();
+
 using (var scope = app.Services.CreateScope())
 {
     DbSeeder.Seed(scope.ServiceProvider.GetRequiredService<AppDbContext>());
 }
-app.UseSwagger(); app.UseSwaggerUI();
-app.UseHttpsRedirection();
-app.UseStaticFiles();      // ? ADDED (serves /uploads/events/*.jpg)
-app.UseAuthentication();   // must come before UseAuthorization
+
+app.UseSwagger();
+app.UseSwaggerUI();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
+
+app.UseStaticFiles();
+app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapControllers();
 app.Run();
 
-public partial class Program { }  // needed for integration tests
+public partial class Program { }
